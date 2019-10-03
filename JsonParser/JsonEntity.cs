@@ -14,6 +14,6 @@ namespace JsonParser
 
     public abstract partial class JsonEntity
     {
-        public static JsonEntity Parse(string json) => throw new NotImplementedException();
+        public static JsonEntity Parse(string json) => JsonGrammar.JsonEntity.Parse(json);
     }
 }

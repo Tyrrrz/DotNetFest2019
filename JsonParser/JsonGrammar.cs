@@ -42,19 +42,19 @@ namespace JsonParser
 
         private static readonly Parser<KeyValuePair<string, JsonEntity>> JsonProperty =
             from name in JsonString.Select(s => s.Value)
-            from colon in Parse.Char(':')
+            from colon in Parse.Char(':').Token()
             from value in JsonEntity
             select new KeyValuePair<string, JsonEntity>(name, value);
 
         private static readonly Parser<JsonObject> JsonObject =
             from open in Parse.Char('{')
-            from properties in JsonProperty.DelimitedBy(Parse.Char(','))
+            from properties in JsonProperty.Token().DelimitedBy(Parse.Char(','))
             from close in Parse.Char('}')
             select new JsonObject(properties.ToDictionary(p => p.Key, p => p.Value));
 
         private static readonly Parser<JsonArray> JsonArray =
             from open in Parse.Char('[')
-            from children in JsonEntity.DelimitedBy(Parse.Char(','))
+            from children in JsonEntity.Token().DelimitedBy(Parse.Char(','))
             from close in Parse.Char(']')
             select new JsonArray(children.ToArray());
 

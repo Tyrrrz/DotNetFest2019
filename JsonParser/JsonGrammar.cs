@@ -15,24 +15,8 @@ namespace JsonParser
 
         private static readonly Parser<JsonBoolean> JsonBoolean = TrueJsonBoolean.Or(FalseJsonBoolean);
 
-        private static readonly Parser<JsonNumber> IntegerJsonNumber =
-            from sign in Parse.Chars('+', '-').Once().Text().Optional()
-            from integerPart in Parse.Digit.XAtLeastOnce().Text()
-            let text = sign.GetOrDefault() + integerPart
-            let value = double.Parse(text, CultureInfo.InvariantCulture)
-            select new JsonNumber(value);
-
-        private static readonly Parser<JsonNumber> FractionalJsonNumber =
-            from sign in Parse.Chars('+', '-').Once().Text().Optional()
-            from integerPart in Parse.Digit.AtLeastOnce().Text()
-            from decimalSeparator in Parse.Char('.')
-            from fractionalPart in Parse.Digit.AtLeastOnce().Text()
-            let text = sign.GetOrDefault() + integerPart + decimalSeparator + fractionalPart
-            let value = double.Parse(text, CultureInfo.InvariantCulture)
-            select new JsonNumber(value);
-
         private static readonly Parser<JsonNumber> JsonNumber =
-            FractionalJsonNumber.Or(IntegerJsonNumber);
+            Parse.DecimalInvariant.Select(s => double.Parse(s, CultureInfo.InvariantCulture)).Select(v => new JsonNumber(v));
 
         private static readonly Parser<JsonString> JsonString =
             from open in Parse.Char('"')

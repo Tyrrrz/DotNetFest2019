@@ -1,0 +1,17 @@
+{
+    "order": {
+        "complete": true,
+        "items": [
+            {
+                "name": "Egg",
+                "qty": 2,
+                "price": 3.14
+            },
+            {
+                "name": "Bottle of water",
+                "qty": 1,
+                "price": 2.50
+            }
+        ]
+    }
+}

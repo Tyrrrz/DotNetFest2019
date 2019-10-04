@@ -16,13 +16,16 @@ namespace JsonParser
         private static readonly Parser<JsonBoolean> JsonBoolean = TrueJsonBoolean.Or(FalseJsonBoolean);
 
         private static readonly Parser<JsonNumber> JsonNumber =
-            Parse.DecimalInvariant.Select(s => double.Parse(s, CultureInfo.InvariantCulture)).Select(v => new JsonNumber(v));
+            Parse.DecimalInvariant
+                .Select(s => double.Parse(s, CultureInfo.InvariantCulture))
+                .Select(v => new JsonNumber(v));
 
         private static readonly Parser<JsonString> JsonString =
-            from open in Parse.Char('"')
-            from value in Parse.CharExcept('"').Many().Text()
-            from close in Parse.Char('"')
-            select new JsonString(value);
+            Parse.CharExcept('"')
+                .Many()
+                .Text()
+                .Contained(Parse.Char('"'), Parse.Char('"'))
+                .Select(v => new JsonString(v));
 
         private static readonly Parser<KeyValuePair<string, JsonEntity>> JsonProperty =
             from name in JsonString.Select(s => s.Value)
@@ -31,16 +34,19 @@ namespace JsonParser
             select new KeyValuePair<string, JsonEntity>(name, value);
 
         private static readonly Parser<JsonObject> JsonObject =
-            from open in Parse.Char('{')
-            from properties in JsonProperty.Token().DelimitedBy(Parse.Char(','))
-            from close in Parse.Char('}')
-            select new JsonObject(properties.ToDictionary(p => p.Key, p => p.Value));
+            JsonProperty
+                .Token()
+                .DelimitedBy(Parse.Char(','))
+                .Contained(Parse.Char('{'), Parse.Char('}'))
+                .Select(p => p.ToDictionary(kvp => kvp.Key, kvp => kvp.Value))
+                .Select(p => new JsonObject(p));
 
         private static readonly Parser<JsonArray> JsonArray =
-            from open in Parse.Char('[')
-            from children in JsonEntity.Token().DelimitedBy(Parse.Char(','))
-            from close in Parse.Char(']')
-            select new JsonArray(children.ToArray());
+            Parse.Ref(() => JsonEntity)
+                .Token()
+                .DelimitedBy(Parse.Char(','))
+                .Contained(Parse.Char('['), Parse.Char(']'))
+                .Select(c => new JsonArray(c.ToArray()));
 
         public static readonly Parser<JsonEntity> JsonEntity =
             JsonArray.Or<JsonEntity>(JsonObject).Or(JsonString).Or(JsonNumber).Or(JsonBoolean).Or(JsonNull);
